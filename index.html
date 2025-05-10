@@ -822,6 +822,9 @@
                     }
                     
                     holdingTimer = false;
+                } else if (running) {
+                    // Detener el timer con cualquier tecla cuando está corriendo
+                    stopTimer();
                 }
             }
             
@@ -924,7 +927,7 @@
             }
             
             function stopTimerOnKey(e) {
-                if (running && (e.code === 'Space' || e.key === ' ')) {
+                if (running) {
                     e.preventDefault();
                     stopTimer();
                 }
@@ -1010,36 +1013,26 @@
             }
             
             function generateScramble(category) {
-                // Movimientos base para cubos NxNxN
-                const cubeMoves = ["U", "U'", "U2", "D", "D'", "D2", 
-                                 "F", "F'", "F2", "B", "B'", "B2",
-                                 "R", "R'", "R2", "L", "L'", "L2"];
-                
-                // Movimientos con wide moves (para cubos 4x4x4+)
-                const wideMoves = ["Uw", "Uw'", "Uw2", "Dw", "Dw'", "Dw2",
-                                 "Fw", "Fw'", "Fw2", "Bw", "Bw'", "Bw2",
-                                 "Rw", "Rw'", "Rw2", "Lw", "Lw'", "Lw2"];
-                
                 if (category === '333' || !category) {
-                    return generateRandomScramble(cubeMoves, 20);
+                    return generate3x3Scramble();
                 }
                 else if (category === '222') {
-                    return generateRandomScramble(["U", "U'", "U2", "F", "F'", "F2", "R", "R'", "R2"], 10);
+                    return generate2x2Scramble();
                 }
                 else if (category === '444') {
-                    return generateRandomScramble([...cubeMoves, ...wideMoves], 40);
+                    return generate4x4Scramble();
                 }
                 else if (category === '555') {
-                    return generateRandomScramble([...cubeMoves, ...wideMoves], 60);
+                    return generate5x5Scramble();
                 }
                 else if (category === '666') {
-                    return generateRandomScramble([...cubeMoves, ...wideMoves], 80);
+                    return generate6x6Scramble();
                 }
                 else if (category === '777') {
-                    return generateRandomScramble([...cubeMoves, ...wideMoves], 100);
+                    return generate7x7Scramble();
                 }
                 else if (category === '333bf' || category === '333oh') {
-                    return generateRandomScramble(cubeMoves, 20);
+                    return generate3x3Scramble();
                 }
                 else if (category === '333fm') {
                     return "Fewest Moves - Sin scramble generado";
@@ -1051,15 +1044,13 @@
                     return generateMegaminxScramble();
                 }
                 else if (category === 'pyram') {
-                    const moves = ["U", "U'", "L", "L'", "R", "R'", "B", "B'"];
-                    return generateRandomScramble(moves, 10);
+                    return generatePyraminxScramble();
                 }
                 else if (category === 'skewb') {
-                    const moves = ["U", "U'", "L", "L'", "R", "R'", "B", "B'"];
-                    return generateRandomScramble(moves, 10);
+                    return generateSkewbScramble();
                 }
                 else if (category === 'sq1') {
-                    return generateSquare1Scramble(15);
+                    return generateSquare1Scramble();
                 }
                 else if (category === '444bf' || category === '555bf') {
                     return "BLD - Usa scrambles oficiales";
@@ -1072,6 +1063,235 @@
                 }
             }
             
+            function generate3x3Scramble() {
+    const faces = ['U', 'D', 'F', 'B', 'R', 'L'];
+    const modifiers = ['', "'", '2'];
+    const scramble = [];
+    let lastFace = '';
+    let secondLastFace = '';
+    
+    for (let i = 0; i < 20; i++) {
+        let face, modifier;
+        let attempts = 0;
+        const maxAttempts = 50;
+        
+        do {
+            face = faces[Math.floor(Math.random() * faces.length)];
+            modifier = modifiers[Math.floor(Math.random() * modifiers.length)];
+            attempts++;
+            
+            // Evitar que se supere el máximo de intentos
+            if (attempts >= maxAttempts) break;
+            
+        } while (
+            // Evitar repetición de la misma cara consecutiva
+            face === lastFace ||
+            // Evitar patrones como B F' B (misma cara con una cara opuesta en medio)
+            (face === secondLastFace && isOppositeFace(face, lastFace)) ||
+            // Evitar movimientos redundantes como F F' o F' F
+            (face === lastFace && (
+                (modifier === "'" && scramble[scramble.length-1].includes(face) && !scramble[scramble.length-1].includes("'")) ||
+                (modifier === "" && scramble[scramble.length-1].includes(face) && scramble[scramble.length-1].includes("'"))
+            ))
+        );
+        
+        // Si no se encontró un movimiento válido después de muchos intentos, reiniciar
+        if (attempts >= maxAttempts) {
+            lastFace = '';
+            secondLastFace = '';
+            i = -1; // Reiniciar el contador
+            scramble.length = 0;
+            continue;
+        }
+        
+        scramble.push(face + modifier);
+        secondLastFace = lastFace;
+        lastFace = face;
+    }
+    
+    return scramble.join(' ');
+}
+
+function isOppositeFace(face1, face2) {
+    const oppositePairs = {
+        'U': 'D',
+        'D': 'U',
+        'F': 'B',
+        'B': 'F',
+        'R': 'L',
+        'L': 'R'
+    };
+    return oppositePairs[face1] === face2;
+}
+            
+function generate2x2Scramble() {
+    const faces = ['U', 'F', 'R'];
+    const modifiers = ['', "'", '2'];
+    const scramble = [];
+    let lastFace = '';
+    let secondLastFace = '';
+    
+    for (let i = 0; i < 10; i++) {
+        let face, modifier;
+        let attempts = 0;
+        const maxAttempts = 50;
+        
+        do {
+            face = faces[Math.floor(Math.random() * faces.length)];
+            modifier = modifiers[Math.floor(Math.random() * modifiers.length)];
+            attempts++;
+            
+            if (attempts >= maxAttempts) break;
+            
+        } while (
+            face === lastFace ||
+            (face === secondLastFace && isOppositeFace2x2(face, lastFace)) ||
+            (face === lastFace && (
+                (modifier === "'" && scramble[scramble.length-1].includes(face) && !scramble[scramble.length-1].includes("'")) ||
+                (modifier === "" && scramble[scramble.length-1].includes(face) && scramble[scramble.length-1].includes("'"))
+            ))
+        );
+        
+        if (attempts >= maxAttempts) {
+            lastFace = '';
+            secondLastFace = '';
+            i = -1;
+            scramble.length = 0;
+            continue;
+        }
+        
+        scramble.push(face + modifier);
+        secondLastFace = lastFace;
+        lastFace = face;
+    }
+    
+    return scramble.join(' ');
+}
+
+function isOppositeFace2x2(face1, face2) {
+    // En 2x2 no hay caras opuestas directas, pero evitamos U D, F B, R L
+    const oppositePairs = {
+        'U': 'D',
+        'F': 'B',
+        'R': 'L'
+    };
+    return oppositePairs[face1] === face2;
+}
+            
+            function generate4x4Scramble() {
+                const faces = ['U', 'D', 'F', 'B', 'R', 'L'];
+                const modifiers = ['', "'", '2'];
+                const wideModifiers = ['w', 'w\'', 'w2'];
+                const scramble = [];
+                let lastFace = '';
+                
+                for (let i = 0; i < 40; i++) {
+                    let face, modifier;
+                    let isWide = Math.random() > 0.7;
+                    
+                    do {
+                        face = faces[Math.floor(Math.random() * faces.length)];
+                        if (isWide) {
+                            modifier = wideModifiers[Math.floor(Math.random() * wideModifiers.length)];
+                        } else {
+                            modifier = modifiers[Math.floor(Math.random() * modifiers.length)];
+                        }
+                    } while (face === lastFace);
+                    
+                    scramble.push(face + modifier);
+                    lastFace = face;
+                }
+                
+                return scramble.join(' ');
+            }
+            
+            function generate5x5Scramble() {
+                const faces = ['U', 'D', 'F', 'B', 'R', 'L'];
+                const modifiers = ['', "'", '2'];
+                const wideModifiers = ['w', 'w\'', 'w2'];
+                const scramble = [];
+                let lastFace = '';
+                
+                for (let i = 0; i < 60; i++) {
+                    let face, modifier;
+                    let isWide = Math.random() > 0.7;
+                    
+                    do {
+                        face = faces[Math.floor(Math.random() * faces.length)];
+                        if (isWide) {
+                            modifier = wideModifiers[Math.floor(Math.random() * wideModifiers.length)];
+                        } else {
+                            modifier = modifiers[Math.floor(Math.random() * modifiers.length)];
+                        }
+                    } while (face === lastFace);
+                    
+                    scramble.push(face + modifier);
+                    lastFace = face;
+                }
+                
+                return scramble.join(' ');
+            }
+            
+            function generate6x6Scramble() {
+                const faces = ['U', 'D', 'F', 'B', 'R', 'L'];
+                const modifiers = ['', "'", '2'];
+                const wideModifiers = ['w', 'w\'', 'w2'];
+                const tripleWideModifiers = ['3w', '3w\'', '3w2'];
+                const scramble = [];
+                let lastFace = '';
+                
+                for (let i = 0; i < 80; i++) {
+                    let face, modifier;
+                    let moveType = Math.random();
+                    
+                    do {
+                        face = faces[Math.floor(Math.random() * faces.length)];
+                        if (moveType < 0.5) {
+                            modifier = modifiers[Math.floor(Math.random() * modifiers.length)];
+                        } else if (moveType < 0.8) {
+                            modifier = wideModifiers[Math.floor(Math.random() * wideModifiers.length)];
+                        } else {
+                            modifier = tripleWideModifiers[Math.floor(Math.random() * tripleWideModifiers.length)];
+                        }
+                    } while (face === lastFace);
+                    
+                    scramble.push(face + modifier);
+                    lastFace = face;
+                }
+                
+                return scramble.join(' ');
+            }
+            
+            function generate7x7Scramble() {
+                const faces = ['U', 'D', 'F', 'B', 'R', 'L'];
+                const modifiers = ['', "'", '2'];
+                const wideModifiers = ['w', 'w\'', 'w2'];
+                const tripleWideModifiers = ['3w', '3w\'', '3w2'];
+                const scramble = [];
+                let lastFace = '';
+                
+                for (let i = 0; i < 100; i++) {
+                    let face, modifier;
+                    let moveType = Math.random();
+                    
+                    do {
+                        face = faces[Math.floor(Math.random() * faces.length)];
+                        if (moveType < 0.5) {
+                            modifier = modifiers[Math.floor(Math.random() * modifiers.length)];
+                        } else if (moveType < 0.8) {
+                            modifier = wideModifiers[Math.floor(Math.random() * wideModifiers.length)];
+                        } else {
+                            modifier = tripleWideModifiers[Math.floor(Math.random() * tripleWideModifiers.length)];
+                        }
+                    } while (face === lastFace);
+                    
+                    scramble.push(face + modifier);
+                    lastFace = face;
+                }
+                
+                return scramble.join(' ');
+            }
+            
             function generateClockScramble() {
                 const pins = ["UR", "DR", "DL", "UL", "U", "R", "D", "L", "ALL"];
                 const directions = ["", "'"];
@@ -1081,16 +1301,17 @@
                 
                 let scramble = [];
                 
-                // Generar movimientos de pines
+                // Generar movimientos de pines (4-6)
                 const shuffledPins = [...pins].sort(() => Math.random() - 0.5);
-                const selectedPins = shuffledPins.slice(0, 4 + Math.floor(Math.random() * 3));
+                const pinCount = 4 + Math.floor(Math.random() * 3); // 4-6 pines
+                const selectedPins = shuffledPins.slice(0, pinCount);
                 
                 for (const pin of selectedPins) {
                     const direction = directions[Math.floor(Math.random() * directions.length)];
                     scramble.push(pin + direction);
                 }
                 
-                // Generar movimientos de ruedas
+                // Generar movimientos de ruedas (4)
                 for (let i = 0; i < 4; i++) {
                     const wheel = ["U", "R", "D", "L"][i];
                     const number = numbers[Math.floor(Math.random() * numbers.length)];
@@ -1099,52 +1320,29 @@
                 }
                 
                 // Añadir rotación y (opcional)
-                const yMove = yMoves[Math.floor(Math.random() * yMoves.length)];
-                if (yMove) {
-                    scramble.push(yMove);
-                    
-                    // Generar más movimientos después de la rotación
-                    const wheel = "URDRDLUL"[Math.floor(Math.random() * 8)];
-                    const number = numbers[Math.floor(Math.random() * numbers.length)];
-                    const sign = signs[Math.floor(Math.random() * signs.length)];
-                    scramble.push(wheel + number + sign);
-                }
-                
-                return scramble.join(' ');
-            }
-            
-            function generateRandomScramble(moves, length) {
-                const scramble = [];
-                let lastMoveFace = '';
-                
-                for (let i = 0; i < length; i++) {
-                    let move;
-                    let moveFace;
-                    let attempts = 0;
-                    
-                    do {
-                        move = moves[Math.floor(Math.random() * moves.length)];
-                        moveFace = move.replace(/[\d']/g, '')[0]; // Get face ignoring numbers and '
+                if (Math.random() > 0.5) {
+                    const yMove = yMoves[Math.floor(Math.random() * yMoves.length)];
+                    if (yMove) {
+                        scramble.push(yMove);
                         
-                        if (attempts++ > 50) break;
-                    } while (moveFace === lastMoveFace);
-                    
-                    scramble.push(move);
-                    lastMoveFace = moveFace;
+                        // Generar más movimientos después de la rotación
+                        const wheel = "URDRDLUL"[Math.floor(Math.random() * 8)];
+                        const number = numbers[Math.floor(Math.random() * numbers.length)];
+                        const sign = signs[Math.floor(Math.random() * signs.length)];
+                        scramble.push(wheel + number + sign);
+                    }
                 }
                 
                 return scramble.join(' ');
             }
             
             function generateMegaminxScramble() {
-                // Movimientos válidos para Megaminx según reglamento WCA
-                const faces = ["U", "R", "D"];
-                const directions = ["", "'", "++", "--"];
-                
-                let scramble = [];
+                const faces = ["R", "D", "U"];
+                const directions = ["++", "--"];
+                const moves = [];
                 let lastFace = "";
                 
-                // Un scramble típico de Megaminx tiene 70 movimientos
+                // Generar 70 movimientos
                 for (let i = 0; i < 70; i++) {
                     let face;
                     do {
@@ -1152,27 +1350,160 @@
                     } while (face === lastFace);
                     
                     const direction = directions[Math.floor(Math.random() * directions.length)];
-                    scramble.push(face + direction);
+                    moves.push(face + direction);
+                    lastFace = face;
+                    
+                    // Cada 10 movimientos, añadir una rotación U
+                    if ((i + 1) % 10 === 0) {
+                        moves.push("U");
+                    }
+                }
+                
+                return moves.join(' ');
+            }
+            
+            function generatePyraminxScramble() {
+    const tips = ["U", "L", "R", "B"];
+    const tipModifiers = ["", "'"];
+    const edges = ["u", "l", "r", "b"];
+    const edgeModifiers = ["", "'"];
+    const scramble = [];
+    
+    // Movimientos de puntas (máx 2 por punta)
+    const tipMoves = [];
+    for (const tip of tips) {
+        if (Math.random() > 0.3) { // 30% de probabilidad por punta
+            const modifier = tipModifiers[Math.floor(Math.random() * tipModifiers.length)];
+            tipMoves.push(tip + modifier);
+        }
+    }
+    
+    // Movimientos de aristas (6-8)
+    const edgeMoves = [];
+    let lastEdge = '';
+    let secondLastEdge = '';
+    const edgeCount = 6 + Math.floor(Math.random() * 3);
+    
+    for (let i = 0; i < edgeCount; i++) {
+        let edge, modifier;
+        let attempts = 0;
+        
+        do {
+            edge = edges[Math.floor(Math.random() * edges.length)];
+            modifier = edgeModifiers[Math.floor(Math.random() * edgeModifiers.length)];
+            attempts++;
+            
+            if (attempts > 50) break;
+            
+        } while (
+            edge === lastEdge ||
+            (edge === secondLastEdge && isOppositeEdgePyram(edge, lastEdge)) ||
+            (edge === lastEdge && (
+                (modifier === "'" && edgeMoves[edgeMoves.length-1].includes(edge) && !edgeMoves[edgeMoves.length-1].includes("'")) ||
+                (modifier === "" && edgeMoves[edgeMoves.length-1].includes(edge) && edgeMoves[edgeMoves.length-1].includes("'"))
+            ))
+        );
+        
+        edgeMoves.push(edge + modifier);
+        secondLastEdge = lastEdge;
+        lastEdge = edge;
+    }
+    
+    // Mezclar puntas y aristas aleatoriamente
+    while (tipMoves.length > 0 || edgeMoves.length > 0) {
+        if (tipMoves.length > 0 && (edgeMoves.length === 0 || Math.random() > 0.5)) {
+            scramble.push(tipMoves.pop());
+        } else {
+            scramble.push(edgeMoves.pop());
+        }
+    }
+    
+    return scramble.join(' ');
+}
+
+function isOppositeEdgePyram(edge1, edge2) {
+    const oppositePairs = {
+        'u': 'b',
+        'l': 'r',
+        'r': 'l',
+        'b': 'u'
+    };
+    return oppositePairs[edge1] === edge2;
+}
+            
+            function generateSkewbScramble() {
+                const faces = ["B", "L", "R", "U"];
+                const modifiers = ["", "'"];
+                const scramble = [];
+                let lastFace = '';
+                
+                for (let i = 0; i < 10; i++) {
+                    let face, modifier;
+                    
+                    do {
+                        face = faces[Math.floor(Math.random() * faces.length)];
+                        modifier = modifiers[Math.floor(Math.random() * modifiers.length)];
+                    } while (face === lastFace);
+                    
+                    scramble.push(face + modifier);
                     lastFace = face;
                 }
                 
                 return scramble.join(' ');
             }
             
-            function generateSquare1Scramble(length) {
-                const moves = [];
-                const topTurns = ['0', '1', '2', '3', '4', '5', '6', '-1', '-2', '-3', '-4', '-5'];
-                const bottomTurns = ['0', '1', '2', '3', '4', '5', '6', '-1', '-2', '-3', '-4', '-5'];
-                
-                for (let i = 0; i < length; i++) {
-                    if (i > 0) moves.push('/');
-                    const top = topTurns[Math.floor(Math.random() * topTurns.length)];
-                    const bottom = bottomTurns[Math.floor(Math.random() * bottomTurns.length)];
-                    moves.push(`(${top},${bottom})`);
-                }
-                
-                return moves.join(' ');
+            function generateSquare1Scramble() {
+    // Movimientos válidos según regulaciones WCA
+    const validMoves = [
+        [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6],
+        [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6]
+    ];
+    
+    const scramble = [];
+    let lastTop = 0, lastBottom = 0;
+    let attempts = 0;
+    const maxAttempts = 100;
+
+    for (let i = 0; i < 12; i++) {
+        let top, bottom;
+        let isValid = false;
+        
+        // Generar movimientos hasta encontrar uno válido
+        do {
+            top = validMoves[0][Math.floor(Math.random() * validMoves[0].length)];
+            bottom = validMoves[1][Math.floor(Math.random() * validMoves[1].length)];
+            attempts++;
+            
+            // Condiciones de validez
+            isValid = !(top === 0 && bottom === 0) && // No (0,0)
+                     !(i > 0 && top === lastTop && bottom === lastBottom) && // No repetidos
+                     (Math.abs(top) <= 5 && Math.abs(bottom) <= 5) && // Límites WCA
+                     !(top === -lastTop && bottom === -lastBottom); // No inversos exactos
+            
+            if (attempts >= maxAttempts) {
+                // Reiniciar si hay demasiados intentos fallidos
+                i = -1;
+                scramble.length = 0;
+                lastTop = 0;
+                lastBottom = 0;
+                attempts = 0;
+                break;
             }
+        } while (!isValid);
+
+        if (attempts >= maxAttempts) continue;
+        
+        // Formatear el movimiento
+        scramble.push(`(${top},${bottom})`);
+        if (i < 11) scramble.push('/');
+        
+        // Guardar el último movimiento válido
+        lastTop = top;
+        lastBottom = bottom;
+    }
+
+    return scramble.join(' ');
+}
             
             function generateNewScramble(category) {
                 currentScramble = generateScramble(category);
