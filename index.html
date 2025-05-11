@@ -299,7 +299,75 @@
                 width: 100%;
                 max-width: 320px;
             }
+            
+            /* Mejoras responsive específicas */
+            .main-container {
+                padding: 0.5rem;
+            }
+            
+            .grid-cols-2, .grid-cols-3 {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-card {
+                padding: 0.5rem;
+            }
+            
+            .scramble-display {
+                font-size: 0.9rem;
+                padding: 0.5rem;
+            }
+            
+            .timer-display {
+                font-size: 3rem;
+            }
+            
+            .btn-primary, .btn-danger, .btn-training {
+                padding: 0.5rem 1rem;
+                font-size: 0.8rem;
+            }
         }
+        
+        /* Soporte para modo horizontal en móviles */
+        @media screen and (min-width: 640px) and (max-height: 500px) and (orientation: landscape) {
+            .main-container {
+                padding: 0.5rem;
+                max-width: 100%;
+            }
+            
+            .grid-cols-1.lg\:grid-cols-3 {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 0.5rem;
+            }
+            
+            .timer-container {
+                padding: 0.5rem;
+            }
+            
+            .compact-timer {
+                font-size: 2.5rem;
+                margin-bottom: 0.5rem;
+            }
+            
+            .timer-touch-area {
+                height: 60px;
+                margin-bottom: 0.5rem;
+            }
+            
+            .stats-card {
+                padding: 0.25rem;
+            }
+            
+            .stats-card .text-2xl {
+                font-size: 1.25rem;
+            }
+        }
+            .disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                pointer-events: none;
+        }
+        
     </style>
 </head>
 <body class="min-h-screen">
@@ -460,10 +528,49 @@
                     </div>
                 </div>
                 
-                <!-- Botón de Entrenamiento añadido aquí -->
-                <a href="entrenamiento.html" class="btn-training px-4 py-2 rounded-lg font-semibold transition flex items-center">
-                    <i class="fas fa-tachometer-alt mr-2"></i>Entrenamiento
-                </a>
+<!-- Menú desplegable de Entrenamiento -->
+<!-- Menú desplegable de Entrenamiento corregido -->
+<div class="dropdown relative">
+    <button class="btn-training px-4 py-2 rounded-lg font-semibold transition flex items-center" id="training-btn">
+        <i class="fas fa-tachometer-alt mr-2"></i>Entrenamiento
+        <i class="fas fa-caret-down ml-2"></i>
+    </button>
+    <div class="dropdown-content absolute right-0 mt-2 hidden w-48 z-10" id="training-dropdown">
+        <a href="entrenamiento.html" class="flex items-center px-4 py-2">
+            <i class="fas fa-cube mr-2"></i>3x3x3
+        </a>
+        <a href="entrenamiento2.html" class="flex items-center px-4 py-2">
+            <i class="fas fa-th mr-2"></i>2x2x2
+        </a>
+        <a href="#" class="flex items-center px-4 py-2 disabled">
+            <i class="fas fa-th-large mr-2"></i>4x4x4 (próximamente)
+        </a>
+        <a href="#" class="flex items-center px-4 py-2 disabled">
+            <i class="fas fa-th-large mr-2"></i>5x5x5 (próximamente)
+        </a>
+        <div class="border-t border-gray-700 my-1"></div>
+        <a href="#" class="flex items-center px-4 py-2 disabled">
+            <i class="fas fa-hand-paper mr-2"></i>3x3x3 OH (próximamente)
+        </a>
+        <a href="#" class="flex items-center px-4 py-2 disabled">
+            <i class="fas fa-blind mr-2"></i>3x3x3 BLD (próximamente)
+        </a>
+        <div class="border-t border-gray-700 my-1"></div>
+        <a href="#" class="flex items-center px-4 py-2 disabled">
+            <i class="fas fa-star mr-2"></i>Megaminx (próximamente)
+        </a>
+        <a href="#" class="flex items-center px-4 py-2 disabled">
+            <i class="fas fa-play mr-2"></i>Pyraminx (próximamente)
+        </a>
+        <a href="#" class="flex items-center px-4 py-2 disabled">
+            <i class="fas fa-gem mr-2"></i>Skewb (próximamente)
+        </a>
+        <a href="#" class="flex items-center px-4 py-2 disabled">
+            <i class="fas fa-square mr-2"></i>Square-1 (próximamente)
+        </a>
+    </div>
+</div>
+
                 
                 <button id="settings-btn" class="p-2 rounded-lg hover:bg-gray-700 transition">
                     <i class="fas fa-cog text-xl"></i>
@@ -471,7 +578,6 @@
             </div>
         </div>
         
-        <!-- Resto del código permanece igual -->
         <!-- Main Content -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-6">
             <!-- Left Column (Timer + History) -->
@@ -632,7 +738,7 @@
             updateScrambleDisplay();
             updateStats();
             renderTimesList();
-            renderTimesChart();
+            initTimesChart();
             
             // Event Listeners
             document.addEventListener('keydown', handleKeyDown);
@@ -647,6 +753,30 @@
             settingsBtn.addEventListener('click', toggleSettings);
             closeSettingsBtn.addEventListener('click', toggleSettings);
             settingsOverlay.addEventListener('click', toggleSettings);
+            
+            // Delegación de eventos para elementos dinámicos
+            timesList.addEventListener('click', function(e) {
+                const penaltyBtn = e.target.closest('.penalty-btn');
+                const deleteBtn = e.target.closest('.delete-btn');
+                const timeEntry = e.target.closest('.time-entry');
+                
+                if (penaltyBtn) {
+                    e.stopPropagation();
+                    const index = parseInt(penaltyBtn.getAttribute('data-index'));
+                    const penalty = penaltyBtn.getAttribute('data-penalty');
+                    applyPenalty(index, penalty);
+                } else if (deleteBtn) {
+                    e.stopPropagation();
+                    const index = parseInt(deleteBtn.getAttribute('data-index'));
+                    deleteTimeEntry(index);
+                } else if (timeEntry) {
+                    const index = parseInt(timeEntry.querySelector('.penalty-btn').getAttribute('data-index'));
+                    const categoryTimes = times.filter(t => t.category === currentCategory);
+                    if (categoryTimes[index]) {
+                        showScrambleForTime(categoryTimes[index].scramble);
+                    }
+                }
+            });
             
             // Configuración de ajustes
             document.querySelectorAll('input[name="inspection"]').forEach(radio => {
@@ -691,50 +821,74 @@
                     this.classList.add('selected');
                     
                     updateColors();
-                    renderTimesChart();
+                    if (timesChart) {
+                        updateChartColors();
+                    }
                 });
             });
             
-            // Toggle dropdown on button click
-            categoryBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                const isOpen = categoryDropdown.style.display === 'block';
-                categoryDropdown.style.display = isOpen ? 'none' : 'block';
-            });
-            
-            // Close dropdown when clicking outside
-            document.addEventListener('click', function(e) {
-                if (!categoryDropdown.contains(e.target) && e.target !== categoryBtn) {
-                    categoryDropdown.style.display = 'none';
-                }
-            });
-            
-            // Category selection
-            categoryOptions.forEach(option => {
-                option.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    
-                    // Update active option
-                    categoryOptions.forEach(o => o.classList.remove('active-category'));
-                    this.classList.add('active-category');
-                    
-                    // Update current category
-                    currentCategory = this.dataset.category;
-                    currentCategoryDisplay.textContent = getCategoryName(currentCategory);
-                    currentCategoryDisplayMain.textContent = getCategoryName(currentCategory);
-                    
-                    // Close dropdown
-                    categoryDropdown.style.display = 'none';
-                    
-                    // Generate new scramble for this category
-                    generateNewScramble(currentCategory);
-                    
-                    // Update stats and times list for the new category
-                    updateStats();
-                    renderTimesList();
-                    renderTimesChart();
-                });
-            });
+//  Obtener referencias a los elementos del menú de entrenamiento
+const trainingBtn = document.getElementById('training-btn');
+    const trainingDropdown = document.getElementById('training-dropdown');
+    
+    // Manejo de clics en las opciones de ENTRENAMIENTO
+    const trainingOptions = document.querySelectorAll('#training-dropdown .category-option:not(.disabled)');
+    trainingOptions.forEach(option => {
+        option.addEventListener('click', function(e) {
+            if (this.classList.contains('disabled')) {
+                e.preventDefault();
+                return;
+            }
+            // Permitir la navegación normal para los enlaces de entrenamiento
+            categoryDropdown.style.display = 'none';
+            trainingDropdown.style.display = 'none';
+        });
+    });
+
+    // Mostrar/ocultar menús
+    categoryBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        trainingDropdown.style.display = 'none';
+        categoryDropdown.style.display = categoryDropdown.style.display === 'block' ? 'none' : 'block';
+    });
+
+    trainingBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        categoryDropdown.style.display = 'none';
+        trainingDropdown.style.display = trainingDropdown.style.display === 'block' ? 'none' : 'block';
+    });
+
+    // Cerrar menús al hacer clic fuera
+    document.addEventListener('click', function(e) {
+        if (!categoryDropdown.contains(e.target) && e.target !== categoryBtn) {
+            categoryDropdown.style.display = 'none';
+        }
+        if (!trainingDropdown.contains(e.target) && e.target !== trainingBtn) {
+            trainingDropdown.style.display = 'none';
+        }
+    });
+
+    // Category selection
+    categoryOptions.forEach(option => {
+        option.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Update active option
+            categoryOptions.forEach(o => o.classList.remove('active-category'));
+            this.classList.add('active-category');
+            // Update current category
+            currentCategory = this.dataset.category;
+            currentCategoryDisplay.textContent = getCategoryName(currentCategory);
+            currentCategoryDisplayMain.textContent = getCategoryName(currentCategory);
+            // Close dropdown
+            categoryDropdown.style.display = 'none';
+            // Generate new scramble for this category
+            generateNewScramble(currentCategory);
+            // Update stats and times list for the new category
+            updateStats();
+            renderTimesList();
+            updateChartData();
+        });
+    });
             
             // Functions
             function toggleSettings() {
@@ -974,7 +1128,7 @@
                 
                 updateStats();
                 renderTimesList();
-                renderTimesChart();
+                updateChartData();
                 
                 generateNewScramble(currentCategory);
                 
@@ -1012,6 +1166,7 @@
                 timerDisplay.textContent = elapsedTime.toFixed(2);
             }
             
+            // ===== GENERADORES DE SCRAMBLE MEJORADOS =====
             function generateScramble(category) {
                 if (category === '333' || !category) {
                     return generate3x3Scramble();
@@ -1064,119 +1219,56 @@
             }
             
             function generate3x3Scramble() {
-    const faces = ['U', 'D', 'F', 'B', 'R', 'L'];
-    const modifiers = ['', "'", '2'];
-    const scramble = [];
-    let lastFace = '';
-    let secondLastFace = '';
+                const faces = ['U', 'D', 'F', 'B', 'R', 'L'];
+                const modifiers = ['', "'", '2'];
+                const scramble = [];
+                let lastFace = '';
+                
+                for (let i = 0; i < 20; i++) {
+                    let face, modifier;
+                    do {
+                        face = faces[Math.floor(Math.random() * faces.length)];
+                        modifier = modifiers[Math.floor(Math.random() * modifiers.length)];
+                    } while (
+                        face === lastFace || // No misma cara consecutiva
+                        (i > 0 && isOppositeFace(face, lastFace)) // No caras opuestas consecutivas
+                    );
+                    
+                    scramble.push(face + modifier);
+                    lastFace = face;
+                }
+                
+                return scramble.join(' ');
+            }
     
-    for (let i = 0; i < 20; i++) {
-        let face, modifier;
-        let attempts = 0;
-        const maxAttempts = 50;
-        
-        do {
-            face = faces[Math.floor(Math.random() * faces.length)];
-            modifier = modifiers[Math.floor(Math.random() * modifiers.length)];
-            attempts++;
+            function isOppositeFace(face1, face2) {
+                const oppositePairs = {
+                    'U': 'D', 'D': 'U',
+                    'F': 'B', 'B': 'F',
+                    'R': 'L', 'L': 'R'
+                };
+                return oppositePairs[face1] === face2;
+            }
             
-            // Evitar que se supere el máximo de intentos
-            if (attempts >= maxAttempts) break;
-            
-        } while (
-            // Evitar repetición de la misma cara consecutiva
-            face === lastFace ||
-            // Evitar patrones como B F' B (misma cara con una cara opuesta en medio)
-            (face === secondLastFace && isOppositeFace(face, lastFace)) ||
-            // Evitar movimientos redundantes como F F' o F' F
-            (face === lastFace && (
-                (modifier === "'" && scramble[scramble.length-1].includes(face) && !scramble[scramble.length-1].includes("'")) ||
-                (modifier === "" && scramble[scramble.length-1].includes(face) && scramble[scramble.length-1].includes("'"))
-            ))
-        );
-        
-        // Si no se encontró un movimiento válido después de muchos intentos, reiniciar
-        if (attempts >= maxAttempts) {
-            lastFace = '';
-            secondLastFace = '';
-            i = -1; // Reiniciar el contador
-            scramble.length = 0;
-            continue;
-        }
-        
-        scramble.push(face + modifier);
-        secondLastFace = lastFace;
-        lastFace = face;
-    }
-    
-    return scramble.join(' ');
-}
-
-function isOppositeFace(face1, face2) {
-    const oppositePairs = {
-        'U': 'D',
-        'D': 'U',
-        'F': 'B',
-        'B': 'F',
-        'R': 'L',
-        'L': 'R'
-    };
-    return oppositePairs[face1] === face2;
-}
-            
-function generate2x2Scramble() {
-    const faces = ['U', 'F', 'R'];
-    const modifiers = ['', "'", '2'];
-    const scramble = [];
-    let lastFace = '';
-    let secondLastFace = '';
-    
-    for (let i = 0; i < 10; i++) {
-        let face, modifier;
-        let attempts = 0;
-        const maxAttempts = 50;
-        
-        do {
-            face = faces[Math.floor(Math.random() * faces.length)];
-            modifier = modifiers[Math.floor(Math.random() * modifiers.length)];
-            attempts++;
-            
-            if (attempts >= maxAttempts) break;
-            
-        } while (
-            face === lastFace ||
-            (face === secondLastFace && isOppositeFace2x2(face, lastFace)) ||
-            (face === lastFace && (
-                (modifier === "'" && scramble[scramble.length-1].includes(face) && !scramble[scramble.length-1].includes("'")) ||
-                (modifier === "" && scramble[scramble.length-1].includes(face) && scramble[scramble.length-1].includes("'"))
-            ))
-        );
-        
-        if (attempts >= maxAttempts) {
-            lastFace = '';
-            secondLastFace = '';
-            i = -1;
-            scramble.length = 0;
-            continue;
-        }
-        
-        scramble.push(face + modifier);
-        secondLastFace = lastFace;
-        lastFace = face;
-    }
-    
-    return scramble.join(' ');
-}
-
-function isOppositeFace2x2(face1, face2) {
-    // En 2x2 no hay caras opuestas directas, pero evitamos U D, F B, R L
-    const oppositePairs = {
-        'U': 'D',
-        'F': 'B',
-        'R': 'L'
-    };
-    return oppositePairs[face1] === face2;
-}
+            function generate2x2Scramble() {
+                const faces = ['U', 'F', 'R'];
+                const modifiers = ['', "'", '2'];
+                const scramble = [];
+                let lastFace = '';
+                
+                for (let i = 0; i < 10; i++) {
+                    let face, modifier;
+                    do {
+                        face = faces[Math.floor(Math.random() * faces.length)];
+                        modifier = modifiers[Math.floor(Math.random() * modifiers.length)];
+                    } while (face === lastFace);
+                    
+                    scramble.push(face + modifier);
+                    lastFace = face;
+                }
+                
+                return scramble.join(' ');
+            }
             
             function generate4x4Scramble() {
                 const faces = ['U', 'D', 'F', 'B', 'R', 'L'];
@@ -1187,15 +1279,13 @@ function isOppositeFace2x2(face1, face2) {
                 
                 for (let i = 0; i < 40; i++) {
                     let face, modifier;
-                    let isWide = Math.random() > 0.7;
+                    let isWide = Math.random() > 0.5; // 50% de probabilidad de ser wide move
                     
                     do {
                         face = faces[Math.floor(Math.random() * faces.length)];
-                        if (isWide) {
-                            modifier = wideModifiers[Math.floor(Math.random() * wideModifiers.length)];
-                        } else {
-                            modifier = modifiers[Math.floor(Math.random() * modifiers.length)];
-                        }
+                        modifier = isWide 
+                            ? wideModifiers[Math.floor(Math.random() * wideModifiers.length)]
+                            : modifiers[Math.floor(Math.random() * modifiers.length)];
                     } while (face === lastFace);
                     
                     scramble.push(face + modifier);
@@ -1214,15 +1304,13 @@ function isOppositeFace2x2(face1, face2) {
                 
                 for (let i = 0; i < 60; i++) {
                     let face, modifier;
-                    let isWide = Math.random() > 0.7;
+                    let isWide = Math.random() > 0.5; // 50% de probabilidad de ser wide move
                     
                     do {
                         face = faces[Math.floor(Math.random() * faces.length)];
-                        if (isWide) {
-                            modifier = wideModifiers[Math.floor(Math.random() * wideModifiers.length)];
-                        } else {
-                            modifier = modifiers[Math.floor(Math.random() * modifiers.length)];
-                        }
+                        modifier = isWide 
+                            ? wideModifiers[Math.floor(Math.random() * wideModifiers.length)]
+                            : modifiers[Math.floor(Math.random() * modifiers.length)];
                     } while (face === lastFace);
                     
                     scramble.push(face + modifier);
@@ -1246,7 +1334,7 @@ function isOppositeFace2x2(face1, face2) {
                     
                     do {
                         face = faces[Math.floor(Math.random() * faces.length)];
-                        if (moveType < 0.5) {
+                        if (moveType < 0.4) {
                             modifier = modifiers[Math.floor(Math.random() * modifiers.length)];
                         } else if (moveType < 0.8) {
                             modifier = wideModifiers[Math.floor(Math.random() * wideModifiers.length)];
@@ -1276,7 +1364,7 @@ function isOppositeFace2x2(face1, face2) {
                     
                     do {
                         face = faces[Math.floor(Math.random() * faces.length)];
-                        if (moveType < 0.5) {
+                        if (moveType < 0.4) {
                             modifier = modifiers[Math.floor(Math.random() * modifiers.length)];
                         } else if (moveType < 0.8) {
                             modifier = wideModifiers[Math.floor(Math.random() * wideModifiers.length)];
@@ -1294,42 +1382,44 @@ function isOppositeFace2x2(face1, face2) {
             
             function generateClockScramble() {
                 const pins = ["UR", "DR", "DL", "UL", "U", "R", "D", "L", "ALL"];
-                const directions = ["", "'"];
+                const directions = ["+", "-"];
                 const numbers = ["1", "2", "3", "4", "5", "6"];
-                const signs = ["+", "-"];
                 const yMoves = ["", "y", "y'", "y2"];
                 
                 let scramble = [];
                 
-                // Generar movimientos de pines (4-6)
-                const shuffledPins = [...pins].sort(() => Math.random() - 0.5);
+                // 1. Movimientos de pines (4-6 pines aleatorios)
                 const pinCount = 4 + Math.floor(Math.random() * 3); // 4-6 pines
-                const selectedPins = shuffledPins.slice(0, pinCount);
+                const selectedPins = [];
                 
-                for (const pin of selectedPins) {
-                    const direction = directions[Math.floor(Math.random() * directions.length)];
-                    scramble.push(pin + direction);
+                while (selectedPins.length < pinCount) {
+                    const pin = pins[Math.floor(Math.random() * pins.length)];
+                    if (!selectedPins.includes(pin)) {
+                        selectedPins.push(pin);
+                        const direction = directions[Math.floor(Math.random() * directions.length)];
+                        scramble.push(pin + direction);
+                    }
                 }
                 
-                // Generar movimientos de ruedas (4)
-                for (let i = 0; i < 4; i++) {
-                    const wheel = ["U", "R", "D", "L"][i];
+                // 2. Movimientos de ruedas (4 movimientos obligatorios)
+                const wheels = ["U", "R", "D", "L"];
+                for (const wheel of wheels) {
                     const number = numbers[Math.floor(Math.random() * numbers.length)];
-                    const sign = signs[Math.floor(Math.random() * signs.length)];
-                    scramble.push(wheel + number + sign);
+                    const direction = directions[Math.floor(Math.random() * directions.length)];
+                    scramble.push(wheel + number + direction);
                 }
                 
-                // Añadir rotación y (opcional)
+                // 3. Rotación opcional (50% de probabilidad)
                 if (Math.random() > 0.5) {
                     const yMove = yMoves[Math.floor(Math.random() * yMoves.length)];
                     if (yMove) {
                         scramble.push(yMove);
                         
-                        // Generar más movimientos después de la rotación
-                        const wheel = "URDRDLUL"[Math.floor(Math.random() * 8)];
+                        // Añadir un movimiento adicional después de la rotación
+                        const wheel = wheels[Math.floor(Math.random() * wheels.length)];
                         const number = numbers[Math.floor(Math.random() * numbers.length)];
-                        const sign = signs[Math.floor(Math.random() * signs.length)];
-                        scramble.push(wheel + number + sign);
+                        const direction = directions[Math.floor(Math.random() * directions.length)];
+                        scramble.push(wheel + number + direction);
                     }
                 }
                 
@@ -1337,21 +1427,15 @@ function isOppositeFace2x2(face1, face2) {
             }
             
             function generateMegaminxScramble() {
-                const faces = ["R", "D", "U"];
+                const faces = ["U", "R", "D"]; // Solo estas caras se usan en scrambles WCA
                 const directions = ["++", "--"];
                 const moves = [];
-                let lastFace = "";
                 
-                // Generar 70 movimientos
+                // Generar 70 movimientos (estándar WCA)
                 for (let i = 0; i < 70; i++) {
-                    let face;
-                    do {
-                        face = faces[Math.floor(Math.random() * faces.length)];
-                    } while (face === lastFace);
-                    
+                    const face = faces[i % 3];
                     const direction = directions[Math.floor(Math.random() * directions.length)];
                     moves.push(face + direction);
-                    lastFace = face;
                     
                     // Cada 10 movimientos, añadir una rotación U
                     if ((i + 1) % 10 === 0) {
@@ -1363,73 +1447,48 @@ function isOppositeFace2x2(face1, face2) {
             }
             
             function generatePyraminxScramble() {
-    const tips = ["U", "L", "R", "B"];
-    const tipModifiers = ["", "'"];
-    const edges = ["u", "l", "r", "b"];
-    const edgeModifiers = ["", "'"];
-    const scramble = [];
-    
-    // Movimientos de puntas (máx 2 por punta)
-    const tipMoves = [];
-    for (const tip of tips) {
-        if (Math.random() > 0.3) { // 30% de probabilidad por punta
-            const modifier = tipModifiers[Math.floor(Math.random() * tipModifiers.length)];
-            tipMoves.push(tip + modifier);
-        }
-    }
-    
-    // Movimientos de aristas (6-8)
-    const edgeMoves = [];
-    let lastEdge = '';
-    let secondLastEdge = '';
-    const edgeCount = 6 + Math.floor(Math.random() * 3);
-    
-    for (let i = 0; i < edgeCount; i++) {
-        let edge, modifier;
-        let attempts = 0;
-        
-        do {
-            edge = edges[Math.floor(Math.random() * edges.length)];
-            modifier = edgeModifiers[Math.floor(Math.random() * edgeModifiers.length)];
-            attempts++;
-            
-            if (attempts > 50) break;
-            
-        } while (
-            edge === lastEdge ||
-            (edge === secondLastEdge && isOppositeEdgePyram(edge, lastEdge)) ||
-            (edge === lastEdge && (
-                (modifier === "'" && edgeMoves[edgeMoves.length-1].includes(edge) && !edgeMoves[edgeMoves.length-1].includes("'")) ||
-                (modifier === "" && edgeMoves[edgeMoves.length-1].includes(edge) && edgeMoves[edgeMoves.length-1].includes("'"))
-            ))
-        );
-        
-        edgeMoves.push(edge + modifier);
-        secondLastEdge = lastEdge;
-        lastEdge = edge;
-    }
-    
-    // Mezclar puntas y aristas aleatoriamente
-    while (tipMoves.length > 0 || edgeMoves.length > 0) {
-        if (tipMoves.length > 0 && (edgeMoves.length === 0 || Math.random() > 0.5)) {
-            scramble.push(tipMoves.pop());
-        } else {
-            scramble.push(edgeMoves.pop());
-        }
-    }
-    
-    return scramble.join(' ');
-}
-
-function isOppositeEdgePyram(edge1, edge2) {
-    const oppositePairs = {
-        'u': 'b',
-        'l': 'r',
-        'r': 'l',
-        'b': 'u'
-    };
-    return oppositePairs[edge1] === edge2;
-}
+                const tips = ["U", "L", "R", "B"];
+                const tipModifiers = ["", "'"];
+                const edges = ["u", "l", "r", "b"];
+                const edgeModifiers = ["", "'"];
+                const scramble = [];
+                
+                // Movimientos de puntas (1-4 puntas)
+                const tipMoves = [];
+                for (const tip of tips) {
+                    if (Math.random() > 0.5) { // 50% de probabilidad por punta
+                        const modifier = tipModifiers[Math.floor(Math.random() * tipModifiers.length)];
+                        tipMoves.push(tip + modifier);
+                    }
+                }
+                
+                // Movimientos de aristas (6-8)
+                const edgeMoves = [];
+                let lastEdge = '';
+                const edgeCount = 6 + Math.floor(Math.random() * 3);
+                
+                for (let i = 0; i < edgeCount; i++) {
+                    let edge, modifier;
+                    do {
+                        edge = edges[Math.floor(Math.random() * edges.length)];
+                        modifier = edgeModifiers[Math.floor(Math.random() * edgeModifiers.length)];
+                    } while (edge === lastEdge);
+                    
+                    edgeMoves.push(edge + modifier);
+                    lastEdge = edge;
+                }
+                
+                // Mezclar puntas y aristas
+                while (tipMoves.length > 0 || edgeMoves.length > 0) {
+                    if (tipMoves.length > 0 && (edgeMoves.length === 0 || Math.random() > 0.5)) {
+                        scramble.push(tipMoves.shift());
+                    } else {
+                        scramble.push(edgeMoves.shift());
+                    }
+                }
+                
+                return scramble.join(' ');
+            }
             
             function generateSkewbScramble() {
                 const faces = ["B", "L", "R", "U"];
@@ -1453,57 +1512,48 @@ function isOppositeEdgePyram(edge1, edge2) {
             }
             
             function generateSquare1Scramble() {
-    // Movimientos válidos según regulaciones WCA
-    const validMoves = [
-        [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6],
-        [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6]
-    ];
-    
-    const scramble = [];
-    let lastTop = 0, lastBottom = 0;
-    let attempts = 0;
-    const maxAttempts = 100;
-
-    for (let i = 0; i < 12; i++) {
-        let top, bottom;
-        let isValid = false;
-        
-        // Generar movimientos hasta encontrar uno válido
-        do {
-            top = validMoves[0][Math.floor(Math.random() * validMoves[0].length)];
-            bottom = validMoves[1][Math.floor(Math.random() * validMoves[1].length)];
-            attempts++;
-            
-            // Condiciones de validez
-            isValid = !(top === 0 && bottom === 0) && // No (0,0)
-                     !(i > 0 && top === lastTop && bottom === lastBottom) && // No repetidos
-                     (Math.abs(top) <= 5 && Math.abs(bottom) <= 5) && // Límites WCA
-                     !(top === -lastTop && bottom === -lastBottom); // No inversos exactos
-            
-            if (attempts >= maxAttempts) {
-                // Reiniciar si hay demasiados intentos fallidos
-                i = -1;
-                scramble.length = 0;
-                lastTop = 0;
-                lastBottom = 0;
-                attempts = 0;
-                break;
+                const moves = [];
+                let prevTop = 0, prevBottom = 0;
+                
+                // Generar exactamente 12 movimientos (como en competiciones WCA)
+                for (let i = 0; i < 12; i++) {
+                    let top, bottom;
+                    let valid = false;
+                    
+                    // Generar movimientos válidos según reglas WCA
+                    while (!valid) {
+                        // Top layer: -5 a 6 (0 es inválido)
+                        top = Math.floor(Math.random() * 12) - 5;
+                        if (top === 0) continue;
+                        
+                        // Bottom layer: -5 a 6 (0 es inválido)
+                        bottom = Math.floor(Math.random() * 12) - 5;
+                        if (bottom === 0) continue;
+                        
+                        // Validar según reglas WCA
+                        valid = true;
+                        
+                        // No puede ser igual al movimiento anterior
+                        if (i > 0 && top === prevTop && bottom === prevBottom) {
+                            valid = false;
+                        }
+                        
+                        // No puede ser el inverso exacto del movimiento anterior
+                        if (i > 0 && top === -prevTop && bottom === -prevBottom) {
+                            valid = false;
+                        }
+                    }
+                    
+                    // Añadir el movimiento
+                    moves.push(`(${top},${bottom})`);
+                    if (i < 11) moves.push('/');
+                    
+                    prevTop = top;
+                    prevBottom = bottom;
+                }
+                
+                return moves.join(' ');
             }
-        } while (!isValid);
-
-        if (attempts >= maxAttempts) continue;
-        
-        // Formatear el movimiento
-        scramble.push(`(${top},${bottom})`);
-        if (i < 11) scramble.push('/');
-        
-        // Guardar el último movimiento válido
-        lastTop = top;
-        lastBottom = bottom;
-    }
-
-    return scramble.join(' ');
-}
             
             function generateNewScramble(category) {
                 currentScramble = generateScramble(category);
@@ -1587,59 +1637,32 @@ function isOppositeEdgePyram(edge1, edge2) {
                     return;
                 }
                 
-                timesList.innerHTML = '';
+                let html = '';
                 
                 categoryTimes.forEach((entry, index) => {
-                    const timeEntry = document.createElement('div');
-                    timeEntry.className = 'time-entry flex justify-between items-center p-3 border-b border-gray-700 text-sm cursor-pointer hover:bg-gray-800 rounded-lg mb-1';
-                    
-                    timeEntry.innerHTML = `
-                        <div class="flex items-center">
-                            <span class="text-gray-400 mr-3 w-6 text-right">${index + 1}.</span>
-                            <span class="font-mono ${entry.penalty === '+2' ? 'text-yellow-400' : entry.penalty === 'DNF' ? 'text-red-400' : 'text-white'}">
-                                ${formatTimeWithPenalty(entry.time, entry.penalty)}
-                            </span>
-                        </div>
-                        <div class="flex items-center">
-                            <div class="penalty-buttons mr-3">
-                                <button class="penalty-btn text-xs px-2 py-1 rounded ${entry.penalty === undefined ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400'} mr-1" data-index="${index}" data-penalty="OK">OK</button>
-                                <button class="penalty-btn text-xs px-2 py-1 rounded ${entry.penalty === '+2' ? 'bg-yellow-600 text-white' : 'bg-gray-700 text-gray-400'} mr-1" data-index="${index}" data-penalty="+2">+2</button>
-                                <button class="penalty-btn text-xs px-2 py-1 rounded ${entry.penalty === 'DNF' ? 'bg-red-600 text-white' : 'bg-gray-700 text-gray-400'}" data-index="${index}" data-penalty="DNF">DNF</button>
+                    html += `
+                        <div class="time-entry flex justify-between items-center p-3 border-b border-gray-700 text-sm cursor-pointer hover:bg-gray-800 rounded-lg mb-1">
+                            <div class="flex items-center">
+                                <span class="text-gray-400 mr-3 w-6 text-right">${index + 1}.</span>
+                                <span class="font-mono ${entry.penalty === '+2' ? 'text-yellow-400' : entry.penalty === 'DNF' ? 'text-red-400' : 'text-white'}">
+                                    ${formatTimeWithPenalty(entry.time, entry.penalty)}
+                                </span>
                             </div>
-                            <button class="delete-btn text-red-400 hover:text-red-300 ml-2" data-index="${index}">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
+                            <div class="flex items-center">
+                                <div class="penalty-buttons mr-3">
+                                    <button class="penalty-btn text-xs px-2 py-1 rounded ${entry.penalty === undefined ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400'} mr-1" data-index="${index}" data-penalty="OK">OK</button>
+                                    <button class="penalty-btn text-xs px-2 py-1 rounded ${entry.penalty === '+2' ? 'bg-yellow-600 text-white' : 'bg-gray-700 text-gray-400'} mr-1" data-index="${index}" data-penalty="+2">+2</button>
+                                    <button class="penalty-btn text-xs px-2 py-1 rounded ${entry.penalty === 'DNF' ? 'bg-red-600 text-white' : 'bg-gray-700 text-gray-400'}" data-index="${index}" data-penalty="DNF">DNF</button>
+                                </div>
+                                <button class="delete-btn text-red-400 hover:text-red-300 ml-2" data-index="${index}">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
                         </div>
                     `;
-                    
-                    timeEntry.addEventListener('click', (e) => {
-                        // Solo mostrar scramble si no se hizo clic en un botón
-                        if (!e.target.closest('button')) {
-                            showScrambleForTime(entry.scramble);
-                        }
-                    });
-                    
-                    timesList.appendChild(timeEntry);
                 });
                 
-                // Event listeners para botones de penalización
-                document.querySelectorAll('.penalty-btn').forEach(btn => {
-                    btn.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        const index = parseInt(this.getAttribute('data-index'));
-                        const penalty = this.getAttribute('data-penalty');
-                        applyPenalty(index, penalty);
-                    });
-                });
-                
-                // Event listeners para botones de eliminar
-                document.querySelectorAll('.delete-btn').forEach(btn => {
-                    btn.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        const index = parseInt(this.getAttribute('data-index'));
-                        deleteTimeEntry(index);
-                    });
-                });
+                timesList.innerHTML = html;
             }
             
             function showScrambleForTime(scramble) {
@@ -1685,7 +1708,7 @@ function isOppositeEdgePyram(edge1, edge2) {
                     localStorage.setItem('speedcube-times', JSON.stringify(times));
                     updateStats();
                     renderTimesList();
-                    renderTimesChart();
+                    updateChartData();
                 }
             }
             
@@ -1698,7 +1721,7 @@ function isOppositeEdgePyram(edge1, edge2) {
                     localStorage.setItem('speedcube-times', JSON.stringify(times));
                     updateStats();
                     renderTimesList();
-                    renderTimesChart();
+                    updateChartData();
                 }
             }
             
@@ -1708,17 +1731,13 @@ function isOppositeEdgePyram(edge1, edge2) {
                     localStorage.setItem('speedcube-times', JSON.stringify(times));
                     updateStats();
                     renderTimesList();
-                    renderTimesChart();
+                    updateChartData();
                 }
             }
             
-            function renderTimesChart() {
-                const categoryTimes = times.filter(t => t.category === currentCategory).reverse();
+            function initTimesChart() {
                 const ctx = document.getElementById('times-chart').getContext('2d');
-                
-                if (timesChart) {
-                    timesChart.destroy();
-                }
+                const categoryTimes = times.filter(t => t.category === currentCategory).reverse();
                 
                 if (categoryTimes.length < 2) {
                     document.getElementById('times-chart').style.display = 'none';
@@ -1820,6 +1839,42 @@ function isOppositeEdgePyram(edge1, edge2) {
                 });
             }
             
+            function updateChartData() {
+                const categoryTimes = times.filter(t => t.category === currentCategory).reverse();
+                
+                if (!timesChart) {
+                    initTimesChart();
+                    return;
+                }
+                
+                if (categoryTimes.length < 2) {
+                    document.getElementById('times-chart').style.display = 'none';
+                    return;
+                }
+                
+                document.getElementById('times-chart').style.display = 'block';
+                
+                const labels = categoryTimes.map((_, i) => i + 1);
+                const data = categoryTimes.map(t => t.penalty === 'DNF' ? null : (t.penalty === '+2' ? t.time + 2 : t.time));
+                const bestTime = Math.min(...data.filter(t => t !== null));
+                
+                timesChart.data.labels = labels;
+                timesChart.data.datasets[0].data = data;
+                timesChart.data.datasets[1].data = Array(data.length).fill(bestTime);
+                timesChart.update();
+            }
+            
+            function updateChartColors() {
+                if (!timesChart) return;
+                
+                timesChart.data.datasets[0].borderColor = primaryColor;
+                timesChart.data.datasets[0].backgroundColor = hexToRgba(primaryColor, 0.1);
+                timesChart.data.datasets[0].pointBackgroundColor = primaryColor;
+                timesChart.data.datasets[1].borderColor = accentColor;
+                timesChart.options.plugins.tooltip.borderColor = primaryColor;
+                timesChart.update();
+            }
+            
             function showPBAlert(time) {
                 const alert = document.createElement('div');
                 alert.className = 'fixed top-6 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-6 py-3 rounded-full shadow-xl z-50 pb-alert flex items-center';
@@ -1861,6 +1916,79 @@ function isOppositeEdgePyram(edge1, edge2) {
                 return names[category] || category;
             }
         });
+
+// Manejo de clics en las opciones de CATEGORÍA
+const categoryOptions = document.querySelectorAll('#category-dropdown .category-option');
+categoryOptions.forEach(option => {
+    option.addEventListener('click', function(e) {
+        e.preventDefault();
+        currentCategory = this.dataset.category;
+        currentCategoryDisplay.textContent = getCategoryName(currentCategory);
+        currentCategoryDisplayMain.textContent = getCategoryName(currentCategory);
+        
+        // Actualizar opción activa
+        categoryOptions.forEach(o => o.classList.remove('active-category'));
+        this.classList.add('active-category');
+        
+        // Cerrar dropdown
+        categoryDropdown.style.display = 'none';
+        
+        // Generar nuevo scramble y actualizar UI
+        generateNewScramble(currentCategory);
+        updateStats();
+        renderTimesList();
+        updateChartData();
+    });
+});
+
+//  Obtener referencias a los elementos del menú de entrenamiento
+const trainingBtn = document.getElementById('training-btn');
+    const trainingDropdown = document.getElementById('training-dropdown');
+
+    // Manejo de clics en las opciones de ENTRENAMIENTO
+    const trainingOptions = document.querySelectorAll('#training-dropdown .category-option:not(.disabled)');
+    trainingOptions.forEach(option => {
+        option.addEventListener('click', function(e) {
+            if (this.classList.contains('disabled')) {
+                e.preventDefault();
+                return;
+            }
+            // No hacemos nada aquí para permitir la navegación
+        });
+    });
+
+    // Mostrar/ocultar menús (reorganizado)
+    categoryBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        toggleDropdown(categoryDropdown);
+        hideDropdown(trainingDropdown);
+    });
+
+    trainingBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        toggleDropdown(trainingDropdown);
+        hideDropdown(categoryDropdown);
+    });
+
+    // Función auxiliar para mostrar/ocultar
+    function toggleDropdown(dropdown) {
+        dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+    }
+
+    // Función auxiliar para ocultar
+    function hideDropdown(dropdown) {
+        dropdown.style.display = 'none';
+    }
+
+    // Cerrar menús al hacer clic fuera
+    document.addEventListener('click', function(e) {
+        if (!categoryDropdown.contains(e.target) && e.target !== categoryBtn) {
+            hideDropdown(categoryDropdown);
+        }
+        if (!trainingDropdown.contains(e.target) && e.target !== trainingBtn) {
+            hideDropdown(trainingDropdown);
+        }
+    });
     </script>
 </body>
 </html>
